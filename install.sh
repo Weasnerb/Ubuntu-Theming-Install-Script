@@ -74,12 +74,21 @@ function downloadIcons {
 function downloadDebFiles {
     # Download VS Code deb
     wget https://go.microsoft.com/fwlink/?LinkID=760868 -O VS_Code.deb
+    sudo dpkg -i VS_Code.deb
+    sudo apt-get -y install -f
+    rm VS_Code.deb
 
     # Download Git Kraken deb
     wget https://release.gitkraken.com/linux/gitkraken-amd64.deb -O GitKraken.deb
+    sudo dpkg -i GitKraken.deb
+    sudo apt-get -y install -f
+    rm GitKraken.deb
 }
 
 function installPackageManagedApps {
+    # Install Google Chrome
+    sudo apt-get -y install google-chrome-stable
+
     # Install Xenlism-Minimalism-Theme
     sudo apt-get -y install xenlism-minimalism-theme
     
