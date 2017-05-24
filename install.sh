@@ -12,6 +12,7 @@ function main {
         updateAndUpgrade
         installApps
         addAppsToStartupApplications
+        extraConfigurations
         installGrubHoldshift
         removeUnusedPackages
     else
@@ -68,10 +69,16 @@ function installApps {
 function downloadIcons {
     # Apps Icon for Gnome Activities Configurator 
     wget https://storage.googleapis.com/material-icons/external-assets/v4/icons/svg/ic_apps_white_24px.svg
-    mv ic_apps_white_24px.svg /usr/share/gnome-shell/extensions/apps_icon.svg
+    sudo mv ic_apps_white_24px.svg /usr/share/gnome-shell/extensions/apps_icon.svg
 }
 
 function downloadDebFiles {
+    # Download and install Google Chrome
+    wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+    sudo dpkg -i google-chrome*.deb
+    sudo apt-get -y install -f
+    rm google-chrome*.deb
+
     # Download VS Code deb
     wget https://go.microsoft.com/fwlink/?LinkID=760868 -O VS_Code.deb
     sudo dpkg -i VS_Code.deb
@@ -86,9 +93,6 @@ function downloadDebFiles {
 }
 
 function installPackageManagedApps {
-    # Install Google Chrome
-    sudo apt-get -y install google-chrome-stable
-
     # Install Xenlism-Minimalism-Theme
     sudo apt-get -y install xenlism-minimalism-theme
     
@@ -99,7 +103,7 @@ function installPackageManagedApps {
     sudo apt-get -y install ruby2.3 ruby2.3-dev
 
     # Install Gnome Desktop
-    sudo apt-get install ubuntu-gnome-desktop
+    sudo apt-get -y install gnome-shell
 }
 
 function installNonPackageManagedApps {
@@ -115,7 +119,7 @@ function installRubyMine {
     rm -rf RubyMine-2017.1.3/
 
     # Add RubyMine App Launcher
-    echo '[Desktop Entry]
+    sudo echo '[Desktop Entry]
     Name=RubyMine
     Type=Application
     Exec=/usr/local/bin/RubyMine-2017.1.3/bin/rubymine.sh 
@@ -124,12 +128,12 @@ function installRubyMine {
     Comment=Launches RubyMine
     NoDisplay=false
     Categories=Development;IDE
-    Name[en]=RubyMine.desktop' | sudo tee -a /usr/share/applications/RubyMine.desktop
+    Name[en]=RubyMine.desktop' > /usr/share/applications/RubyMine.desktop
 }
 
 function addAppsToStartupApplications {
     # Stop Mouse Acceleration on Startup
-    echo '[Desktop Entry]
+    sudo echo '[Desktop Entry]
     Type=Application
     Exec=xset m 00
     Hidden=false
@@ -138,10 +142,10 @@ function addAppsToStartupApplications {
     Name[en_IN]=Stop Mouse Acceleration
     Name=Stop Mouse Acceleration
     Comment[en_IN]=Stops Mouse Acceleration
-    Comment=Stops Mouse Acceleration' | sudo tee -a ~/.config/autostart/stopMouseAccel.desktop
+    Comment=Stops Mouse Acceleration' > ~/.config/autostart/stopMouseAccel.desktop
 
     # Add Plank to Autostart
-    echo '[Desktop Entry]
+    sudo echo '[Desktop Entry]
     Name=Plank
     GenericName=Dock
     Comment=Stupidly simple.
@@ -150,15 +154,20 @@ function addAppsToStartupApplications {
     Exec=plank 
     Icon=plank
     Terminal=false
-    NoDisplay=false' | sudo tee -a ~/.config/autostart/plank.desktop
+    NoDisplay=false' > ~/.config/autostart/plank.desktop
 }
 
 function extraConfigurations {
+    # Thinkpad issue with i915 driver and boot
+    sudo echo 'thinkpad-acpi.brightness_enable=1 acpi_backlight=vendor' > /boot/grub/menu.lst
+    sudo update-grub
+
     # Change Grub Background color to Black, so when skipping grub, dont notice grub.
     rm /usr/share/plymouth/themes/default.grub
-    echo 'if background_color 0,0,0; then
+    sudo echo 'if background_color 0,0,0; then
         clear
-    fi' | sudo tee -a /usr/share/plymouth/themes/default.grub
+    fi' > /usr/share/plymouth/themes/default.grub
+    sudo update-initramfs -u
 
     # Remove Gnome logo from login screen
     rm /usr/share/plymouth/ubuntu-gnome_logo.png
@@ -196,6 +205,20 @@ function installGnomeExtensions {
     gnomeshell-extension-manage --install --extension-id 442 --system
     gnomeshell-extension-manage --install --extension-id 358 --system
     gnomeshell-extension-manage --install --extension-id 19 --system
+    
+    # Restart Gnome-shell
+    gnome-shell --replace
+
+    # Enable Extensions
+    gnome-shell-extension-tool -e activities-configurator
+    gnome-shell-extension-tool -e drop-down-terminal
+    gnome-shell-extension-tool -e gno-menu
+    gnome-shell-extension-tool -e openweather
+    gnome-shell-extension-tool -e steal-my-focus
+    gnome-shell-extension-tool -e user-themes
+
+    # Restart Gnome-shell
+    gnome-shell --replace
 }
 
 function configureTheme {
@@ -206,8 +229,8 @@ function configureTheme {
     gsettings set org.gnome.desktop.interface icon-theme "Ardis-Icons"
     gsettings set org.gnome.desktop.interface text-scaling-factor 1.5
 
-    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path /usr/share/gnome-shell/extensions/apps_icon.svg
-    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
+    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path '/usr/share/gnome-shell/extensions/apps_icon.svg'
+    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
 
     gsettings set org.gnome.shell.extensions.user-theme name Uranus-V0.0.2
 }
@@ -219,9 +242,7 @@ function installGrubHoldshift {
     rm -rf grub-holdshift/
 
     # Update Grub
-    sudo rm /etc/default/grub
-    sudo touch /etc/default/grub
-    echo 'GRUB_DEFAULT=saved
+    sudo echo 'GRUB_DEFAULT=saved
     GRUB_SAVEDEFAULT=true
     #GRUB_HIDDEN_TIMEOUT=0
     GRUB_HIDDEN_TIMEOUT_QUIET=true
@@ -229,7 +250,7 @@ function installGrubHoldshift {
     GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
     GRUB_CMDLINE_LINUX_DEFAULT="quiet splash"
     GRUB_CMDLINE_LINUX=""
-    GRUB_FORCE_HIDDEN_MENU="true"' | sudo tee -a /etc/default/grub
+    GRUB_FORCE_HIDDEN_MENU="true"' > /etc/default/grub
     sudo update-grub
 }
 
