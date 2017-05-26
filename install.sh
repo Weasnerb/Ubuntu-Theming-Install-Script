@@ -88,7 +88,7 @@ function downloadIcons {
 
 function installPackageManagedApps {
     # Install Xenlism-Minimalism-Theme
-    sudo apt-get -y install xenlism-minimalism-theme
+    sudo apt-get --allow-unauthenticated -y install xenlism-minimalism-theme
     
     # Install Plank
     sudo apt-get -y install plank
@@ -251,6 +251,36 @@ function addScriptToStartup {
     Exec=sudo '${SCRIPTPATH}' afterReboot
     Terminal=true
     NoDisplay=false' > ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
+
+    # Enable Gnome-Extensions on Startup
+    currentDir=$pwd
+    cd /usr/local/share/gnome-shell/extensions
+    extensions=(*)
+    cd $currentDir
+    pos=$(( ${#extensions[*]} - 1 ))
+    last=${extensions[$pos]}
+
+    extensionArray=""
+    for dir in "${extensions[@]}"
+    do
+        if [[ $dir == $last ]]
+        then
+            extensionArray+=$dir
+        else
+            extensionArray+=$dir", "
+        fi
+    done
+
+    sudo echo '[Desktop Entry]
+    Type=Application
+    Exec=gsettings set org.gnome.shell enabled-extensions ['${extensionArray}']
+    Hidden=false
+    NoDisplay=false
+    X-GNOME-Autostart-enabled=true
+    Name[en_IN]=Enable Gnome-Extensions on Startup
+    Name=Enable Gnome-Extensions on Startup
+    Comment[en_IN]=Enables Gnome-Extensions on Startup
+    Comment=Enables Gnome-Extensions on Startup' > ~/.config/autostart/enableAllGnomeExtensions.desktop
 }
 
 
@@ -269,19 +299,8 @@ function afterReboot {
 }
 
 function extraConfigurations {
-    enableGnomeExtensions
     configureTerminal
     configureTheme
-}
-
-function enableGnomeExtensions {
-    # Enable Extensions
-    gnome-shell-extension-tool -e activities-configurator
-    gnome-shell-extension-tool -e drop-down-terminal
-    gnome-shell-extension-tool -e gno-menu
-    gnome-shell-extension-tool -e openweather
-    gnome-shell-extension-tool -e steal-my-focus
-    gnome-shell-extension-tool -e user-themes
 }
 
 function configureTerminal {
