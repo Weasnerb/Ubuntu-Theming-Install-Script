@@ -1,10 +1,21 @@
 #!/bin/bash
 
-function main {
+
+
+function checkPrivileges {
     if [[ $(/usr/bin/id -u) -ne 0 ]]; then
         echo "Insufficient privileges"
         exit
     fi
+}
+
+
+###########################
+###### Before Reboot ######
+###########################
+
+function beforeReboot {
+    checkPrivileges
     if ping -q -c 1 -W 1 google.com >/dev/null; then
         setDirectoryAndInstallGit
         addReposToPackageManager
@@ -12,15 +23,21 @@ function main {
         updateAndUpgrade
         installApps
         addAppsToStartupApplications
-        extraConfigurations
         installGrubHoldshift
         removeUnusedPackages
+        configure
+        addScripToStartup
     else
         echo "No Network Connection, Please Connect to the Internet"
     fi
 }
 
 function setDirectoryAndInstallGit {
+    # Get ScriptPath
+    pushd `dirname $0` > /dev/null
+    SCRIPTPATH=`pwd`
+    popd > /dev/null
+
     # Make Working Directory The Downloads Folder
     cd ~/Downloads
 
@@ -61,7 +78,6 @@ function updateAndUpgrade {
 
 function installApps {
     downloadIcons
-    downloadDebFiles
     installPackageManagedApps
     installNonPackageManagedApps
 }
@@ -72,7 +88,29 @@ function downloadIcons {
     sudo mv ic_apps_white_24px.svg /usr/share/gnome-shell/extensions/apps_icon.svg
 }
 
-function downloadDebFiles {
+function installPackageManagedApps {
+    # Install Xenlism-Minimalism-Theme
+    sudo apt-get -y install xenlism-minimalism-theme
+    
+    # Install Plank
+    sudo apt-get -y install plank
+
+    # Install Ruby
+    sudo apt-get -y install ruby2.3 ruby2.3-dev
+
+    # Install Gnome Desktop
+    sudo apt-get -y install gdm3
+
+    # Install Gnome-Tweak-Tool
+    sudo apt-get -y install gnome-tweak-tool
+}
+
+function installNonPackageManagedApps {
+    downloadAndInstallDebFiles
+    installRubyMine
+}
+
+function downloadAndInstallDebFiles {
     # Download and install Google Chrome
     wget https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
     sudo dpkg -i google-chrome*.deb
@@ -92,24 +130,6 @@ function downloadDebFiles {
     rm GitKraken.deb
 }
 
-function installPackageManagedApps {
-    # Install Xenlism-Minimalism-Theme
-    sudo apt-get -y install xenlism-minimalism-theme
-    
-    # Install Plank
-    sudo apt-get -y install plank
-
-    # Install Ruby
-    sudo apt-get -y install ruby2.3 ruby2.3-dev
-
-    # Install Gnome Desktop
-    sudo apt-get -y install gnome-shell
-}
-
-function installNonPackageManagedApps {
-    installRubyMine
-}
-
 function installRubyMine {
     #Download and Install
     wget https://download.jetbrains.com/ruby/RubyMine-2017.1.3.tar.gz
@@ -118,7 +138,7 @@ function installRubyMine {
     rm RubyMine-2017.1.3.tar.gz
     rm -rf RubyMine-2017.1.3/
 
-    # Add RubyMine App Launcher
+    # Add RubyMine To App Launcher
     sudo echo '[Desktop Entry]
     Name=RubyMine
     Type=Application
@@ -132,6 +152,9 @@ function installRubyMine {
 }
 
 function addAppsToStartupApplications {
+    # Make autostart Directory if Does not exist
+    sudo mkdir -p ~/.config/autostart/
+
     # Stop Mouse Acceleration on Startup
     sudo echo '[Desktop Entry]
     Type=Application
@@ -157,88 +180,10 @@ function addAppsToStartupApplications {
     NoDisplay=false' > ~/.config/autostart/plank.desktop
 }
 
-function extraConfigurations {
-    # Thinkpad issue with i915 driver and boot
-    sudo echo 'thinkpad-acpi.brightness_enable=1 acpi_backlight=vendor' > /boot/grub/menu.lst
-    sudo update-grub
-
-    # Change Grub Background color to Black, so when skipping grub, dont notice grub.
-    rm /usr/share/plymouth/themes/default.grub
-    sudo echo 'if background_color 0,0,0; then
-        clear
-    fi' > /usr/share/plymouth/themes/default.grub
-    sudo update-initramfs -u
-
-    # Remove Gnome logo from login screen
-    rm /usr/share/plymouth/ubuntu-gnome_logo.png
-
-    configureTerminal
-    installGnomeExtensions
-    configureTheme
-}
-
-function configureTerminal {
-    profile_name=$(gsettings get org.gnome.Terminal.ProfilesList default)
-    profile_name=$(sed -e "s/^'//" -e "s/'$//" <<<"$profile_name")
-
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ background-transparency-percent 22
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ foreground-color 'rgb(255,255,255)'
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-theme-colors false
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-theme-transparency false
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-transparent-background true
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ visible-name Transparent
-}
-
-function installGnomeExtensions {
-    # Remove Preinstalled Gnome Extensions
-    sudo rm -rf /usr/share/gnome-shell/extensions/
-    sudo rm -rf /usr/local/share/gnome-shell/extensions/
-
-    # Install gnome extension installer for
-    sudo wget -O /usr/local/bin/gnomeshell-extension-manage "https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/gnomeshell-extension-manage"
-    sudo chmod +x /usr/local/bin/gnomeshell-extension-manage
-
-    # Install Extensions
-    gnomeshell-extension-manage --install --extension-id 750 --system
-    gnomeshell-extension-manage --install --extension-id 234 --system
-    gnomeshell-extension-manage --install --extension-id 608 --system
-    gnomeshell-extension-manage --install --extension-id 442 --system
-    gnomeshell-extension-manage --install --extension-id 358 --system
-    gnomeshell-extension-manage --install --extension-id 19 --system
-    
-    # Restart Gnome-shell
-    gnome-shell --replace
-
-    # Enable Extensions
-    gnome-shell-extension-tool -e activities-configurator
-    gnome-shell-extension-tool -e drop-down-terminal
-    gnome-shell-extension-tool -e gno-menu
-    gnome-shell-extension-tool -e openweather
-    gnome-shell-extension-tool -e steal-my-focus
-    gnome-shell-extension-tool -e user-themes
-
-    # Restart Gnome-shell
-    gnome-shell --replace
-}
-
-function configureTheme {
-    gsettings set org.gnome.desktop.wm.preferences button-layout 'close,minimize,maximize,appmenu:'
-
-    gsettings set org.gnome.desktop.interface clock-show-date true
-    gsettings set org.gnome.desktop.interface gtk-theme "Xenlism-Minimalism"
-    gsettings set org.gnome.desktop.interface icon-theme "Ardis-Icons"
-    gsettings set org.gnome.desktop.interface text-scaling-factor 1.5
-
-    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path '/usr/share/gnome-shell/extensions/apps_icon.svg'
-    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
-
-    gsettings set org.gnome.shell.extensions.user-theme name Uranus-V0.0.2
-}
-
 function installGrubHoldshift {
     # Grub Holdshift
     git clone https://github.com/hobarrera/grub-holdshift.git
-    cp grub-holdshift/31_hold_shift /etc/grub.d/
+    sudo cp grub-holdshift/31_hold_shift /etc/grub.d/
     rm -rf grub-holdshift/
 
     # Update Grub
@@ -259,4 +204,125 @@ function removeUnusedPackages {
     sudo apt-get -y autoremove
 }
 
-main
+function configure {
+    # Change Grub Background color to Black, so when skipping grub, dont notice grub.
+    rm /usr/share/plymouth/themes/default.grub
+    sudo echo 'if background_color 0,0,0; then
+        clear
+    fi' > /usr/share/plymouth/themes/default.grub
+    sudo update-initramfs -u
+
+    # Remove Gnome logo from login screen
+    rm /usr/share/plymouth/ubuntu-gnome_logo.png
+
+    removePreinstalledGnomeExtensions
+    installGnomeExtensions
+}
+
+
+function removePreinstalledGnomeExtensions {
+    # Remove Preinstalled Gnome Extensions
+    sudo rm -rf /usr/share/gnome-shell/extensions/
+    sudo rm -rf /usr/local/share/gnome-shell/extensions/
+}
+
+function installGnomeExtensions {
+    # Install gnome etension installer for
+    sudo wget -O /usr/local/bin/gnomeshell-extension-manage "https://raw.githubusercontent.com/NicolasBernaerts/ubuntu-scripts/master/ubuntugnome/gnomeshell-extension-manage"
+    sudo chmod +x /usr/local/bin/gnomeshell-extension-manage
+
+    # Install Extensions
+    gnomeshell-extension-manage --install --extension-id 750 --system
+    gnomeshell-extension-manage --install --extension-id 234 --system
+    gnomeshell-extension-manage --install --extension-id 608 --system
+    gnomeshell-extension-manage --install --extension-id 442 --system
+    gnomeshell-extension-manage --install --extension-id 358 --system
+    gnomeshell-extension-manage --install --extension-id 19 --system
+    
+    # Reload Gnome-shell
+    sudo /etc/init.d/gdm3 force-reload
+}
+
+function addScriptToStartup {
+    # Add This Script To Startup So rest of Configuration can be done after reboot
+    sudo echo '[Desktop Entry]
+    Name=Ubuntu-Themeing-Install-Script
+    Comment=Rest Of Configurations
+    Categories=Utility;
+    Type=Application
+    Exec=sudo '${SCRIPTPATH}' afterReboot
+    Terminal=true
+    NoDisplay=false' > ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
+}
+
+
+##########################
+###### After Reboot ######
+##########################
+
+function afterReboot {
+    checkPrivileges
+    if ping -q -c 1 -W 1 google.com >/dev/null; then
+        extraConfigurations
+        removeScriptFromStartup
+    else
+        echo "No Network Connection, Please Connect to the Internet"
+    fi
+}
+
+function extraConfigurations {
+    enableGnomeExtensions
+    configureTerminal
+    configureTheme
+}
+
+function enableGnomeExtensions {
+    # Enable Extensions
+    gnome-shell-extension-tool -e activities-configurator
+    gnome-shell-extension-tool -e drop-down-terminal
+    gnome-shell-extension-tool -e gno-menu
+    gnome-shell-extension-tool -e openweather
+    gnome-shell-extension-tool -e steal-my-focus
+    gnome-shell-extension-tool -e user-themes
+
+    # Reload Gnome-shell
+    sudo /etc/init.d/gdm3 force-reload
+}
+
+function configureTerminal {
+    profile_name=$(gsettings get org.gnome.Terminal.ProfilesList default)
+    profile_name=$(sed -e "s/^'//" -e "s/'$//" <<<"$profile_name")
+
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ background-transparency-percent 22
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ foreground-color 'rgb(255,255,255)'
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-theme-colors false
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-theme-transparency false
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-transparent-background true
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ visible-name Transparent
+}
+
+function configureTheme {
+    gsettings set org.gnome.desktop.wm.preferences button-layout 'close,minimize,maximize,appmenu:'
+
+    gsettings set org.gnome.desktop.interface clock-show-date true
+    gsettings set org.gnome.desktop.interface gtk-theme "Xenlism-Minimalism"
+    gsettings set org.gnome.desktop.interface icon-theme "Ardis-Icons"
+    gsettings set org.gnome.desktop.interface text-scaling-factor 1.5
+
+    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path '/usr/share/gnome-shell/extensions/apps_icon.svg'
+    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
+
+    gsettings set org.gnome.shell.extensions.user-theme name Uranus-V0.0.2
+}
+
+function removeScriptFromStartup {
+    rm ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
+}
+
+if [[ $1 = 'afterReboot' ]]; then
+    afterReboot
+    exit 0
+else
+    beforeReboot
+    exit 0
+fi
