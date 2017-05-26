@@ -1,7 +1,5 @@
 #!/bin/bash
 
-
-
 function checkPrivileges {
     if [[ $(/usr/bin/id -u) -ne 0 ]]; then
         echo "Insufficient privileges"
@@ -26,7 +24,7 @@ function beforeReboot {
         installGrubHoldshift
         removeUnusedPackages
         configure
-        addScripToStartup
+        addScriptToStartup
     else
         echo "No Network Connection, Please Connect to the Internet"
     fi
@@ -47,7 +45,7 @@ function setDirectoryAndInstallGit {
 
 function addReposToPackageManager {
     # Add Xenlism-Minimalism repo to Package Manager
-    sudo apt-key -y adv --keyserver keys.gnupg.net --recv-keys 90127F5B
+    sudo apt-key adv --keyserver keys.gnupg.net --recv-keys 90127F5B
     echo "deb http://downloads.sourceforge.net/project/xenlism-wildfire/repo deb/" | sudo tee -a /etc/apt/sources.list
 
     # Add Planky repo to Package Manager for Plank
@@ -284,21 +282,18 @@ function enableGnomeExtensions {
     gnome-shell-extension-tool -e openweather
     gnome-shell-extension-tool -e steal-my-focus
     gnome-shell-extension-tool -e user-themes
-
-    # Reload Gnome-shell
-    sudo /etc/init.d/gdm3 force-reload
 }
 
 function configureTerminal {
     profile_name=$(gsettings get org.gnome.Terminal.ProfilesList default)
     profile_name=$(sed -e "s/^'//" -e "s/'$//" <<<"$profile_name")
 
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ background-transparency-percent 22
-    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ foreground-color 'rgb(255,255,255)'
     gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-theme-colors false
     gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-theme-transparency false
     gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ use-transparent-background true
     gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ visible-name Transparent
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ background-transparency-percent 22
+    gsettings set org.gnome.Terminal.Legacy.Profile:/org/gnome/terminal/legacy/profiles:/:${profile_name}/ foreground-color 'rgb(255,255,255)'
 }
 
 function configureTheme {
@@ -324,5 +319,6 @@ if [[ $1 = 'afterReboot' ]]; then
     exit 0
 else
     beforeReboot
+    sudo reboot
     exit 0
 fi
