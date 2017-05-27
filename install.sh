@@ -78,15 +78,8 @@ function updateAndUpgrade {
 }
 
 function installApps {
-    downloadIcons
     installPackageManagedApps
     installNonPackageManagedApps
-}
-
-function downloadIcons {
-    # Apps Icon for Gnome Activities Configurator 
-    wget https://storage.googleapis.com/material-icons/external-assets/v4/icons/svg/ic_apps_white_24px.svg
-    sudo mv ic_apps_white_24px.svg /usr/share/gnome-shell/extensions/apps_icon.svg
 }
 
 function installPackageManagedApps {
@@ -187,7 +180,6 @@ function installGrubHoldshift {
     # Update Grub
     sudo echo 'GRUB_DEFAULT=saved
     GRUB_SAVEDEFAULT=true
-    #GRUB_HIDDEN_TIMEOUT=0
     GRUB_HIDDEN_TIMEOUT_QUIET=true
     GRUB_TIMEOUT=0
     GRUB_DISTRIBUTOR=`lsb_release -i -s 2> /dev/null || echo Debian`
@@ -237,6 +229,25 @@ function installGnomeExtensions {
     gnomeshell-extension-manage --install --extension-id 358 --system
     gnomeshell-extension-manage --install --extension-id 19 --system
     
+
+    # Add Gnome-Extensions to gsettings
+    currentDir=$pwd
+    cd /usr/local/share/gnome-shell/extensions
+    extensions=(*)
+    cd $currentDir
+
+    for dir in "${extensions[@]}"
+    do  
+        cd /usr/local/share/gnome-shell/extensions/$dir/
+        echo $pwd
+        gschemaFile=$(find -name "*.gschema.xml")
+        if [ ! -z "$gschemaFile" ]; then
+            sudo cp $gschemaFile /usr/share/glib-2.0/schemas/
+        fi
+    done
+    cd $currentDir
+    sudo glib-compile-schemas /usr/share/glib-2.0/schemas/
+
     # Reload Gnome-shell
     sudo /etc/init.d/gdm3 force-reload
 }
@@ -248,7 +259,7 @@ function addScriptToStartup {
     Comment=Rest Of Configurations
     Categories=Utility;
     Type=Application
-    Exec=sudo '${SCRIPTPATH}' afterReboot
+    Exec='${SCRIPTPATH}'install.sh afterReboot
     Terminal=true
     NoDisplay=false' > ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
 }
@@ -259,19 +270,10 @@ function addScriptToStartup {
 ##########################
 
 function afterReboot {
-    checkPrivileges
-    if ping -q -c 1 -W 1 google.com >/dev/null; then
-        extraConfigurations
+        enableAllGnomeExtensions
+        configureTerminal
+        configureTheme
         removeScriptFromStartup
-    else
-        echo "No Network Connection, Please Connect to the Internet"
-    fi
-}
-
-function extraConfigurations {
-    enableAllGnomeExtensions
-    configureTerminal
-    configureTheme
 }
 
 function enableAllGnomeExtensions {
@@ -300,16 +302,34 @@ function configureTerminal {
 }
 
 function configureTheme {
-    gsettings set org.gnome.desktop.wm.preferences button-layout 'close,minimize,maximize,appmenu:'
+    # Plank
+    gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ dock-items "['google-chrome.dockitem', 'gnome-terminal.dockitem', 'nautilus.dockitem', 'code.dockitem', 'RubyMine.dockitem', 'gnome-control-center.dockitem']"
+    gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ icon-size 70
+    gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ zoom-enabled true
+    gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ zoom-percent 120
+    gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ theme 'Transparent'
 
+    # General Gnome Stuff
+    gsettings set org.gnome.desktop.wm.preferences button-layout 'close,minimize,maximize,appmenu:'
     gsettings set org.gnome.desktop.interface clock-show-date true
     gsettings set org.gnome.desktop.interface gtk-theme "Xenlism-Minimalism"
     gsettings set org.gnome.desktop.interface icon-theme "Ardis-Icons"
+    gsettings set org.gnome.shell.extensions.user-theme name Uranus-V0.0.2
     gsettings set org.gnome.desktop.interface text-scaling-factor 1.5
 
-    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path '/usr/share/gnome-shell/extensions/apps_icon.svg'
-    #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
-    #gsettings set org.gnome.shell.extensions.user-theme name Uranus-V0.0.2
+    # Gnome Extension Settings
+    # Gno-Menu
+    gsettings set org.gnome.shell.extensions.gnomenu hide-panel-apps true
+    gsettings set org.gnome.shell.extensions.gnomenu hide-panel-view true
+    gsettings set org.gnome.shell.extensions.gnomenu use-panel-menu-icon false
+
+    # Activities Config
+    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-icon true
+    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
+
+    #Drop Down Terminal
+    gsettings set org.zzrough.gs-extensions.drop-down-terminal foreground-color '#FFF'
+    gsettings set org.zzrough.gs-extensions.drop-down-terminal transparency-level 80
 }
 
 function removeScriptFromStartup {
