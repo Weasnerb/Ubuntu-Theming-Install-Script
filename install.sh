@@ -53,6 +53,9 @@ function addReposToPackageManager {
 
     # Add Ruby Repo to Package Manager
     sudo apt-add-repository -y ppa:brightbox/ruby-ng
+
+    # Allow Installation of Partner Apps
+    sudo add-apt-repository -y "deb http://archive.canonical.com/ $(lsb_release -sc) partner"
 }
 
 function addThemes {
@@ -87,20 +90,17 @@ function downloadIcons {
 }
 
 function installPackageManagedApps {
-    # Install Xenlism-Minimalism-Theme
-    sudo apt-get --allow-unauthenticated -y install xenlism-minimalism-theme
-    
-    # Install Plank
-    sudo apt-get -y install plank
-
-    # Install Ruby
-    sudo apt-get -y install ruby2.3 ruby2.3-dev
-
-    # Install Gnome Desktop
-    sudo apt-get -y install gdm3
+     # Install Gnome Desktop
+    sudo apt-get -y install ubuntu-gnome-desktop
 
     # Install Gnome-Tweak-Tool
     sudo apt-get -y install gnome-tweak-tool
+
+    # Install Xenlism-Minimalism-Theme
+    sudo apt-get --allow-unauthenticated -y install xenlism-minimalism-theme
+    
+    # Install General Apps
+    sudo apt-get -y install plank ruby2.3 ruby2.3-dev skype virtualbox
 }
 
 function installNonPackageManagedApps {
@@ -251,36 +251,6 @@ function addScriptToStartup {
     Exec=sudo '${SCRIPTPATH}' afterReboot
     Terminal=true
     NoDisplay=false' > ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
-
-    # Enable Gnome-Extensions on Startup
-    currentDir=$pwd
-    cd /usr/local/share/gnome-shell/extensions
-    extensions=(*)
-    cd $currentDir
-    pos=$(( ${#extensions[*]} - 1 ))
-    last=${extensions[$pos]}
-
-    extensionArray=""
-    for dir in "${extensions[@]}"
-    do
-        if [[ $dir == $last ]]
-        then
-            extensionArray+=$dir
-        else
-            extensionArray+=$dir", "
-        fi
-    done
-
-    sudo echo '[Desktop Entry]
-    Type=Application
-    Exec=gsettings set org.gnome.shell enabled-extensions ['${extensionArray}']
-    Hidden=false
-    NoDisplay=false
-    X-GNOME-Autostart-enabled=true
-    Name[en_IN]=Enable Gnome-Extensions on Startup
-    Name=Enable Gnome-Extensions on Startup
-    Comment[en_IN]=Enables Gnome-Extensions on Startup
-    Comment=Enables Gnome-Extensions on Startup' > ~/.config/autostart/enableAllGnomeExtensions.desktop
 }
 
 
@@ -299,8 +269,22 @@ function afterReboot {
 }
 
 function extraConfigurations {
+    enableAllGnomeExtensions
     configureTerminal
     configureTheme
+}
+
+function enableAllGnomeExtensions {
+    # Enable Gnome-Extensions on Startup
+    currentDir=$pwd
+    cd /usr/local/share/gnome-shell/extensions
+    extensions=(*)
+    cd $currentDir
+
+    for dir in "${extensions[@]}"
+    do
+        gnome-shell-extension-tool -e $dir
+    done
 }
 
 function configureTerminal {
@@ -325,8 +309,7 @@ function configureTheme {
 
     #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path '/usr/share/gnome-shell/extensions/apps_icon.svg'
     #gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
-
-    gsettings set org.gnome.shell.extensions.user-theme name Uranus-V0.0.2
+    #gsettings set org.gnome.shell.extensions.user-theme name Uranus-V0.0.2
 }
 
 function removeScriptFromStartup {
