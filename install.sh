@@ -259,9 +259,31 @@ function addScriptToStartup {
     Comment=Rest Of Configurations
     Categories=Utility;
     Type=Application
-    Exec='${SCRIPTPATH}'install.sh afterReboot
+    Exec='${SCRIPTPATH}'/install.sh afterReboot
     Terminal=true
     NoDisplay=false' > ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
+}
+
+function askForReboot {
+    echo 
+    echo "#####################################################"
+    echo "#####################################################"
+    echo "For the rest of the changes to apply, please reboot."
+    echo 
+    echo "Would you like to reboot now (y/n)?"
+    echo -n "> "
+    read reply
+    
+    if [ "$reply" = y -o "$reply" = Y ]
+    then
+        sudo reboot
+    else
+        echo 
+        echo "################################"
+        echo "###### Please Reboot Soon ######"
+        echo "################################"
+        sleep 5s
+    fi 
 }
 
 
@@ -303,7 +325,7 @@ function configureTerminal {
 
 function configureTheme {
     # Plank
-    gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ dock-items "['google-chrome.dockitem', 'gnome-terminal.dockitem', 'nautilus.dockitem', 'code.dockitem', 'RubyMine.dockitem', 'gnome-control-center.dockitem']"
+    createAndAddDockItems
     gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ icon-size 70
     gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ zoom-enabled true
     gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ zoom-percent 120
@@ -332,8 +354,39 @@ function configureTheme {
     gsettings set org.zzrough.gs-extensions.drop-down-terminal transparency-level 80
 }
 
+function createAndAddDockItems {
+    # Items to be added to Plank Dock
+    declare -a itemsToPutInDock=("google-chrome" "gnome-terminal" "nautilus" "code" "RubyMine" "gnome-control-center")
+
+    # Remove all current launchers
+    rm -rf ~/.config/plank/dock1/launchers/
+
+    # Create Dockitems
+    first="true"
+    itemArrayString="["
+    for ((i=0; i<${#itemsToPutInDock[@]}; i++));
+    do
+        echo ${itemsToPutInDock[$i]}
+        echo '[PlankDockItemPreferences]
+        Launcher=file:///usr/share/applications/'${itemsToPutInDock[$i]}'.desktop' > ~/.config/plank/dock1/launchers/${itemsToPutInDock[$i]}.dockitem
+
+        itemsToPutInDock[$i]="${itemsToPutInDock[$i]}.dockitem"
+        echo ${itemsToPutInDock[$i]}
+        if [ $first = true ]; then
+            itemArrayString="${itemArrayString}'${itemsToPutInDock[$i]}'"
+            first="false"
+        else
+            itemArrayString="${itemArrayString}, '${itemsToPutInDock[$i]}'"
+        fi
+    done
+    itemArrayString="${itemArrayString}]"
+    
+    # Add Dockitems to Plank's dock-items
+    gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ dock-items "${itemArrayString}"
+}
+
 function removeScriptFromStartup {
-    rm ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
+    sudo rm ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
 }
 
 if [[ $1 = 'afterReboot' ]]; then
@@ -341,6 +394,6 @@ if [[ $1 = 'afterReboot' ]]; then
     exit 0
 else
     beforeReboot
-    sudo reboot
+    askForReboot
     exit 0
 fi
