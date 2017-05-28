@@ -196,7 +196,7 @@ function removeUnusedPackages {
 
 function configure {
     # Change Grub Background color to Black, so when skipping grub, dont notice grub.
-    rm /usr/share/plymouth/themes/default.grub
+    sudo rm /usr/share/plymouth/themes/default.grub
     sudo echo 'if background_color 0,0,0; then
         clear
     fi' > /usr/share/plymouth/themes/default.grub
