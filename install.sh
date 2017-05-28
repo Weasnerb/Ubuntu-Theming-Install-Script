@@ -78,9 +78,15 @@ function updateAndUpgrade {
 }
 
 function installApps {
+    downloadIcons
     installPackageManagedApps
     installNonPackageManagedApps
 }
+
+function downloadIcons { 
+    # Apps Icon for Gnome Activities Configurator  
+    wget https://storage.googleapis.com/material-icons/external-assets/v4/icons/svg/ic_apps_white_24px.svg 
+} 
 
 function installPackageManagedApps {
      # Install Gnome Desktop
@@ -267,7 +273,7 @@ function addScriptToStartup {
     Categories=Utility;
     Type=Application
     Exec='${SCRIPTPATH}'/install.sh afterReboot
-    Terminal=true
+    Terminal=false
     NoDisplay=false' > ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
 }
 
@@ -353,7 +359,8 @@ function configureTheme {
     gsettings set org.gnome.shell.extensions.gnomenu use-panel-menu-icon false
 
     # Activities Config
-    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-icon true
+    mv ic_apps_white_24px.svg /usr/share/gnome-shell/extensions/apps_icon.svg 
+    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path '/usr/share/gnome-shell/extensions/apps_icon.svg'
     gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
 
     #Drop Down Terminal
@@ -373,12 +380,12 @@ function createAndAddDockItems {
     itemArrayString="["
     for ((i=0; i<${#itemsToPutInDock[@]}; i++));
     do
-        echo ${itemsToPutInDock[$i]}
+        # Create .dockitem
         echo '[PlankDockItemPreferences]
         Launcher=file:///usr/share/applications/'${itemsToPutInDock[$i]}'.desktop' > ~/.config/plank/dock1/launchers/${itemsToPutInDock[$i]}.dockitem
 
+        # Add .dockitem to string array
         itemsToPutInDock[$i]="${itemsToPutInDock[$i]}.dockitem"
-        echo ${itemsToPutInDock[$i]}
         if [ $first = true ]; then
             itemArrayString="${itemArrayString}'${itemsToPutInDock[$i]}'"
             first="false"
