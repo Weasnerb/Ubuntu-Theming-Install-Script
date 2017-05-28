@@ -267,7 +267,7 @@ function addScriptToStartup {
     Categories=Utility;
     Type=Application
     Exec='${SCRIPTPATH}'/install.sh afterReboot
-    Terminal=false
+    Terminal=true
     NoDisplay=false' > ~/.config/autostart/Ubuntu-Themeing-Install-Script.desktop
 }
 
@@ -363,7 +363,7 @@ function configureTheme {
 
 function createAndAddDockItems {
     # Items to be added to Plank Dock
-    declare -a itemsToPutInDock=("google-chrome" "gnome-terminal" "nautilus" "code" "RubyMine" "gnome-control-center")
+    declare -a itemsToPutInDock=("google-chrome" "nautilus" "gitkraken" "code" "RubyMine" "virtualbox" "gnome-control-center")
 
     # Remove all current launchers from launchers folder
     rm -rf ~/.config/plank/dock1/launchers/*
