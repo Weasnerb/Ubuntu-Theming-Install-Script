@@ -130,7 +130,7 @@ function installRubyMine {
     rm -rf RubyMine-2017.1.3/
 
     # Add RubyMine To App Launcher
-    sudo echo '[Desktop Entry]
+    echo '[Desktop Entry]
     Name=RubyMine
     Type=Application
     Exec=/usr/local/bin/RubyMine-2017.1.3/bin/rubymine.sh 
@@ -147,7 +147,7 @@ function addAppsToStartupApplications {
     sudo mkdir -p ~/.config/autostart/
 
     # Stop Mouse Acceleration on Startup
-    sudo echo '[Desktop Entry]
+    echo '[Desktop Entry]
     Type=Application
     Exec=xset m 00
     Hidden=false
@@ -159,7 +159,7 @@ function addAppsToStartupApplications {
     Comment=Stops Mouse Acceleration' > ~/.config/autostart/stopMouseAccel.desktop
 
     # Add Plank to Autostart
-    sudo echo '[Desktop Entry]
+    echo '[Desktop Entry]
     Name=Plank
     GenericName=Dock
     Comment=Stupidly simple.
@@ -178,7 +178,7 @@ function installGrubHoldshift {
     rm -rf grub-holdshift/
 
     # Update Grub
-    sudo echo 'GRUB_DEFAULT=saved
+    echo 'GRUB_DEFAULT=saved
     GRUB_SAVEDEFAULT=true
     GRUB_HIDDEN_TIMEOUT_QUIET=true
     GRUB_TIMEOUT=0
@@ -197,13 +197,20 @@ function removeUnusedPackages {
 function configure {
     # Change Grub Background color to Black, so when skipping grub, dont notice grub.
     sudo rm /usr/share/plymouth/themes/default.grub
-    sudo echo 'if background_color 0,0,0; then
+    echo 'if background_color 0,0,0; then
         clear
     fi' > /usr/share/plymouth/themes/default.grub
-    sudo update-initramfs -u
 
     # Remove Gnome logo from login screen
     rm /usr/share/plymouth/ubuntu-gnome_logo.png
+
+    # Update Plymouth and Grub
+    sudo update-initramfs -u
+    sudo update-grub
+
+    # Plymouth always makes and Reports errors
+    # This uses apport to stop that :)
+    echo "/sbin/plymouthd" | sudo tee --append /etc/apport/blacklist.d/apport
 
     removePreinstalledGnomeExtensions
     installGnomeExtensions
@@ -254,7 +261,7 @@ function installGnomeExtensions {
 
 function addScriptToStartup {
     # Add This Script To Startup So rest of Configuration can be done after reboot
-    sudo echo '[Desktop Entry]
+    echo '[Desktop Entry]
     Name=Ubuntu-Themeing-Install-Script
     Comment=Rest Of Configurations
     Categories=Utility;
@@ -358,8 +365,8 @@ function createAndAddDockItems {
     # Items to be added to Plank Dock
     declare -a itemsToPutInDock=("google-chrome" "gnome-terminal" "nautilus" "code" "RubyMine" "gnome-control-center")
 
-    # Remove all current launchers
-    rm -rf ~/.config/plank/dock1/launchers/
+    # Remove all current launchers from launchers folder
+    rm -rf ~/.config/plank/dock1/launchers/*
 
     # Create Dockitems
     first="true"
@@ -380,7 +387,7 @@ function createAndAddDockItems {
         fi
     done
     itemArrayString="${itemArrayString}]"
-    
+
     # Add Dockitems to Plank's dock-items
     gsettings set net.launchpad.plank.dock.settings:/net/launchpad/plank/docks/dock1/ dock-items "${itemArrayString}"
 }
