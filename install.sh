@@ -214,7 +214,6 @@ function configure {
 
     removePreinstalledGnomeExtensions
     installGnomeExtensions
-    downloadIcons
 }
 
 
@@ -259,12 +258,6 @@ function installGnomeExtensions {
     # Reload Gnome-shell
     sudo /etc/init.d/gdm3 force-reload
 }
-
-function downloadIcons { 
-    # Apps Icon for Gnome Activities Configurator  
-    wget https://storage.googleapis.com/material-icons/external-assets/v4/icons/svg/ic_apps_white_24px.svg
-    sudo mv ic_apps_white_24px.svg /usr/local/share/gnome-shell/extensions/apps_icon.svg
-} 
 
 function addScriptToStartup {
     # Add This Script To Startup So rest of Configuration can be done after reboot
@@ -360,7 +353,7 @@ function configureTheme {
     gsettings set org.gnome.shell.extensions.gnomenu use-panel-menu-icon false
 
     # Activities Config
-    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-icon-path '/usr/local/share/gnome-shell/extensions/apps_icon.svg'
+    gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-icon true
     gsettings set org.gnome.shell.extensions.activities-config activities-config-button-no-text true
 
     #Drop Down Terminal
