@@ -146,18 +146,6 @@ function addAppsToStartupApplications {
     # Make autostart Directory if Does not exist
     sudo mkdir -p ~/.config/autostart/
 
-    # Stop Mouse Acceleration on Startup
-    echo '[Desktop Entry]
-    Type=Application
-    Exec=xset m 00
-    Hidden=false
-    NoDisplay=false
-    X-GNOME-Autostart-enabled=true
-    Name[en_IN]=Stop Mouse Acceleration
-    Name=Stop Mouse Acceleration
-    Comment[en_IN]=Stops Mouse Acceleration
-    Comment=Stops Mouse Acceleration' > ~/.config/autostart/stopMouseAccel.desktop
-
     # Add Plank to Autostart
     echo '[Desktop Entry]
     Name=Plank
@@ -212,10 +200,19 @@ function configure {
     # This uses apport to stop that :)
     echo "/sbin/plymouthd" | sudo tee --append /etc/apport/blacklist.d/apport
 
+    stopMouseAcceleration
     removePreinstalledGnomeExtensions
     installGnomeExtensions
 }
 
+function stopMouseAcceleration {
+    echo 'Section "InputClass"
+    Identifier "mouse"
+    MatchIsPointer "on"
+    Option "AccelerationProfile" "-1"
+    Option "AccelerationScheme" "none"
+    EndSection' | sudo tee --append /usr/share/X11/xorg.conf.d/90-mouse.conf
+}
 
 function removePreinstalledGnomeExtensions {
     # Remove Preinstalled Gnome Extensions
