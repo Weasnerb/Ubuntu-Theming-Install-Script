@@ -93,7 +93,7 @@ function installPackageManagedApps {
     sudo apt-get --allow-unauthenticated -y install xenlism-minimalism-theme
     
     # Install General Apps
-    sudo apt-get -y install plank ruby2.3 ruby2.3-dev skype virtualbox
+    sudo apt-get -y install plank ruby2.3 ruby2.3-dev skype virtualbox exfat-fuse exfat-utils
 }
 
 function installNonPackageManagedApps {
