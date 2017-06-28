@@ -56,6 +56,9 @@ function addReposToPackageManager {
 
     # Allow Installation of Partner Apps
     sudo add-apt-repository -y "deb http://archive.canonical.com/ $(lsb_release -sc) partner"
+
+    # Oracle JDK
+    sudo add-apt-repository -y  ppa:webupd8team/java
 }
 
 function addThemes {
@@ -93,12 +96,13 @@ function installPackageManagedApps {
     sudo apt-get --allow-unauthenticated -y install xenlism-minimalism-theme
     
     # Install General Apps
-    sudo apt-get -y install plank ruby2.3 ruby2.3-dev skype virtualbox exfat-fuse exfat-utils
+    sudo apt-get -y install plank ruby2.3 ruby2.3-dev oracle-java7-installer skype virtualbox exfat-fuse exfat-utils 
 }
 
 function installNonPackageManagedApps {
     downloadAndInstallDebFiles
-    installRubyMine
+    #installRubyMine
+    #installIntellij
 }
 
 function downloadAndInstallDebFiles {
@@ -140,6 +144,14 @@ function installRubyMine {
     NoDisplay=false
     Categories=Development;IDE
     Name[en]=RubyMine.desktop' > /usr/share/applications/RubyMine.desktop
+}
+
+function installIntellij {
+    wget https://download-cf.jetbrains.com/idea/ideaIU-2017.1.4.tar.gz
+    tar -xvf ideaIU-2017.1.4.tar.gz
+    sudo cp -a idea-IU-171.4694.23/. /usr/local/bin/Idea-2017.1.4/
+    rm ideaIU-2017.1.4.tar.gz
+    rm -rf idea-IU-171.4694.23/
 }
 
 function addAppsToStartupApplications {
