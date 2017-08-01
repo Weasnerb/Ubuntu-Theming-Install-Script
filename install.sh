@@ -24,10 +24,24 @@ function beforeReboot {
         installGrubHoldshift
         removeUnusedPackages
         configure
+        addAliases
         addScriptToStartup
     else
         echo "No Network Connection, Please Connect to the Internet"
     fi
+}
+
+function askWhatToInstall {
+    echo "Would you like to install  (y/n)?"
+    echo -n "> "
+    read reply
+    
+    if [ "$reply" = y -o "$reply" = Y ]
+    then
+        
+    else
+
+    fi 
 }
 
 function setDirectoryAndInstallGit {
@@ -244,6 +258,7 @@ function installGnomeExtensions {
     gnomeshell-extension-manage --install --extension-id 442 --system
     gnomeshell-extension-manage --install --extension-id 358 --system
     gnomeshell-extension-manage --install --extension-id 19 --system
+    gnomeshell-extension-manage --install --extension-id 941 --system
     
 
     # Add Gnome-Extensions to gsettings
@@ -266,6 +281,10 @@ function installGnomeExtensions {
 
     # Reload Gnome-shell
     sudo /etc/init.d/gdm3 force-reload
+}
+
+function addAliases {
+    alias wanip="dig +short myip.opendns.com @resolver1.opendns.com"
 }
 
 function addScriptToStartup {
@@ -372,7 +391,7 @@ function configureTheme {
 
 function createAndAddDockItems {
     # Items to be added to Plank Dock
-    declare -a itemsToPutInDock=("google-chrome" "nautilus" "gitkraken" "code" "RubyMine" "virtualbox" "gnome-control-center")
+    declare -a itemsToPutInDock=("google-chrome" "nautilus" "gitkraken" "code" "virtualbox" "gnome-control-center")
 
     # Remove all current launchers from launchers folder
     rm -rf ~/.config/plank/dock1/launchers/*
