@@ -122,6 +122,16 @@ function downloadAndInstallDebFiles {
     sudo dpkg -i GitKraken.deb
     sudo apt-get -y install -f
     rm GitKraken.deb
+
+    # Download latest Jetbrains toolbox
+    wget "https://data.services.jetbrains.com//products/releases?code=TBA&latest=true&type=release" -O toolbox_links.json
+    wget $(grep -Po '(?<="linux":{"link":")([^"]+)' toolbox_links.json) -O jbToolbox.tar.gz
+    tar -xvf jbToolbox.tar.gz
+    mv jetbrains-toolbox-*/jetbrains-toolbox .
+    
+    rm toolbox_links.json
+    rm jbToolbox.tar.gz
+    rm -r jetbrains-toolbox-*
 }
 
 function addAppsToStartupApplications {
