@@ -31,19 +31,6 @@ function beforeReboot {
     fi
 }
 
-function askWhatToInstall {
-    echo "Would you like to install  (y/n)?"
-    echo -n "> "
-    read reply
-    
-    if [ "$reply" = y -o "$reply" = Y ]
-    then
-        
-    else
-
-    fi 
-}
-
 function setDirectoryAndInstallGit {
     # Get ScriptPath
     pushd `dirname $0` > /dev/null
@@ -115,8 +102,6 @@ function installPackageManagedApps {
 
 function installNonPackageManagedApps {
     downloadAndInstallDebFiles
-    #installRubyMine
-    #installIntellij
 }
 
 function downloadAndInstallDebFiles {
@@ -137,35 +122,6 @@ function downloadAndInstallDebFiles {
     sudo dpkg -i GitKraken.deb
     sudo apt-get -y install -f
     rm GitKraken.deb
-}
-
-function installRubyMine {
-    #Download and Install
-    wget https://download.jetbrains.com/ruby/RubyMine-2017.1.3.tar.gz
-    tar -xvf RubyMine-2017.1.3.tar.gz
-    sudo cp -a RubyMine-2017.1.3/. /usr/local/bin/RubyMine-2017.1.3/
-    rm RubyMine-2017.1.3.tar.gz
-    rm -rf RubyMine-2017.1.3/
-
-    # Add RubyMine To App Launcher
-    echo '[Desktop Entry]
-    Name=RubyMine
-    Type=Application
-    Exec=/usr/local/bin/RubyMine-2017.1.3/bin/rubymine.sh 
-    Terminal=false
-    Icon=/usr/local/bin/RubyMine-2017.1.3/bin/RMlogo.svg
-    Comment=Launches RubyMine
-    NoDisplay=false
-    Categories=Development;IDE
-    Name[en]=RubyMine.desktop' > /usr/share/applications/RubyMine.desktop
-}
-
-function installIntellij {
-    wget https://download-cf.jetbrains.com/idea/ideaIU-2017.1.4.tar.gz
-    tar -xvf ideaIU-2017.1.4.tar.gz
-    sudo cp -a idea-IU-171.4694.23/. /usr/local/bin/Idea-2017.1.4/
-    rm ideaIU-2017.1.4.tar.gz
-    rm -rf idea-IU-171.4694.23/
 }
 
 function addAppsToStartupApplications {
@@ -284,7 +240,7 @@ function installGnomeExtensions {
 }
 
 function addAliases {
-    alias wanip="dig +short myip.opendns.com @resolver1.opendns.com"
+    echo "alias wanip='dig +short myip.opendns.com @resolver1.opendns.com'" >> ~/.bashrc
 }
 
 function addScriptToStartup {
