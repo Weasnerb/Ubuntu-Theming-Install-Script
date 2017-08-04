@@ -24,6 +24,7 @@ function beforeReboot {
         installGrubHoldshift
         removeUnusedPackages
         configure
+        addAliases
         addScriptToStartup
     else
         echo "No Network Connection, Please Connect to the Internet"
@@ -101,8 +102,6 @@ function installPackageManagedApps {
 
 function installNonPackageManagedApps {
     downloadAndInstallDebFiles
-    #installRubyMine
-    #installIntellij
 }
 
 function downloadAndInstallDebFiles {
@@ -123,35 +122,16 @@ function downloadAndInstallDebFiles {
     sudo dpkg -i GitKraken.deb
     sudo apt-get -y install -f
     rm GitKraken.deb
-}
 
-function installRubyMine {
-    #Download and Install
-    wget https://download.jetbrains.com/ruby/RubyMine-2017.1.3.tar.gz
-    tar -xvf RubyMine-2017.1.3.tar.gz
-    sudo cp -a RubyMine-2017.1.3/. /usr/local/bin/RubyMine-2017.1.3/
-    rm RubyMine-2017.1.3.tar.gz
-    rm -rf RubyMine-2017.1.3/
-
-    # Add RubyMine To App Launcher
-    echo '[Desktop Entry]
-    Name=RubyMine
-    Type=Application
-    Exec=/usr/local/bin/RubyMine-2017.1.3/bin/rubymine.sh 
-    Terminal=false
-    Icon=/usr/local/bin/RubyMine-2017.1.3/bin/RMlogo.svg
-    Comment=Launches RubyMine
-    NoDisplay=false
-    Categories=Development;IDE
-    Name[en]=RubyMine.desktop' > /usr/share/applications/RubyMine.desktop
-}
-
-function installIntellij {
-    wget https://download-cf.jetbrains.com/idea/ideaIU-2017.1.4.tar.gz
-    tar -xvf ideaIU-2017.1.4.tar.gz
-    sudo cp -a idea-IU-171.4694.23/. /usr/local/bin/Idea-2017.1.4/
-    rm ideaIU-2017.1.4.tar.gz
-    rm -rf idea-IU-171.4694.23/
+    # Download latest Jetbrains toolbox
+    wget "https://data.services.jetbrains.com//products/releases?code=TBA&latest=true&type=release" -O toolbox_links.json
+    wget $(grep -Po '(?<="linux":{"link":")([^"]+)' toolbox_links.json) -O jbToolbox.tar.gz
+    tar -xvf jbToolbox.tar.gz
+    mv jetbrains-toolbox-*/jetbrains-toolbox .
+    
+    rm toolbox_links.json
+    rm jbToolbox.tar.gz
+    rm -r jetbrains-toolbox-*
 }
 
 function addAppsToStartupApplications {
@@ -244,6 +224,7 @@ function installGnomeExtensions {
     gnomeshell-extension-manage --install --extension-id 442 --system
     gnomeshell-extension-manage --install --extension-id 358 --system
     gnomeshell-extension-manage --install --extension-id 19 --system
+    gnomeshell-extension-manage --install --extension-id 941 --system
     
 
     # Add Gnome-Extensions to gsettings
@@ -266,6 +247,10 @@ function installGnomeExtensions {
 
     # Reload Gnome-shell
     sudo /etc/init.d/gdm3 force-reload
+}
+
+function addAliases {
+    echo "alias wanip='dig +short myip.opendns.com @resolver1.opendns.com'" >> ~/.bashrc
 }
 
 function addScriptToStartup {
@@ -372,7 +357,7 @@ function configureTheme {
 
 function createAndAddDockItems {
     # Items to be added to Plank Dock
-    declare -a itemsToPutInDock=("google-chrome" "nautilus" "gitkraken" "code" "RubyMine" "virtualbox" "gnome-control-center")
+    declare -a itemsToPutInDock=("google-chrome" "nautilus" "gitkraken" "code" "virtualbox" "gnome-control-center")
 
     # Remove all current launchers from launchers folder
     rm -rf ~/.config/plank/dock1/launchers/*

@@ -16,7 +16,6 @@ This script will automate the install of many useful apps and change your theme.
     * [Google Chrome](https://www.google.com/chrome/)
     * [VS Code](https://code.visualstudio.com/)
     * [GitKraken](https://www.gitkraken.com/)
-    * [RubyMine](https://www.jetbrains.com/ruby/)
 
 
 ## Install/Usage
